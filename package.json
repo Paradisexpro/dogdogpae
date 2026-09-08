@@ -1,0 +1,12 @@
+{
+  "name": "dogdog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DogDog - social app for dogs (Firebase)",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0"
+  }
+}

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DogDog - สังคมออนไลน์ของเพื่อนสี่ขา</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/feed.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Navigation Bar -->
+    <header class="top-header">
+      <div class="header-inner">
+        <a class="header-brand" href="#" data-tab="home">
+          <div class="brand-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="4"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+            </svg>
+          </div>
+          <div class="brand-text gradient-text">DogDog</div>
+        </a>
+
+        <div class="header-search" id="sidebarSearch">
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input class="search-input" id="searchInput" type="text" placeholder="ค้นหาโปรไฟล์..." autocomplete="off">
+          </div>
+          <div class="search-results" id="searchResults"></div>
+        </div>
+
+        <nav class="header-nav">
+          <ul class="nav-list" id="navList">
+            <li class="nav-item active" data-tab="home">
+              <a href="#">
+                <span class="nav-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </span>
+                <span>หน้าหลัก</span>
+              </a>
+            </li>
+            <li class="nav-item" data-tab="chat">
+              <a href="#">
+                <span class="nav-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                  </svg>
+                </span>
+                <span>ข้อความ</span>
+                <span class="badge-counter hidden" id="chatBadge">0</span>
+              </a>
+            </li>
+            <li class="nav-item" data-tab="profile">
+              <a href="#">
+                <span class="nav-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                <span>โปรไฟล์</span>
+              </a>
+            </li>
+            <li class="nav-item" data-tab="admin" id="navAdmin">
+              <a href="#">
+                <span class="nav-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <path d="M9 12l2 2 4-4"></path>
+                  </svg>
+                </span>
+                <span>Admin</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="header-footer" id="sidebarFooter"></div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-container" id="content"></div>
+    </main>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="window.app.closeModal('authModal')">✕</button>
+      <div class="auth-switch">
+        <button class="auth-switch-btn active" id="authTabLogin" onclick="window.app.switchAuthTab('login')">เข้าสู่ระบบ</button>
+        <button class="auth-switch-btn" id="authTabRegister" onclick="window.app.switchAuthTab('register')">สมัครสมาชิก</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="authLoginForm" class="auth-form" onsubmit="window.app.handleLogin(event)">
+        <h2 class="modal-title">ยินดีต้อนรับกลับ! 🐾</h2>
+        <p class="modal-subtitle">เข้าสู่ระบบเพื่อดูฟีดเพื่อนสี่ขาของคุณ</p>
+        <div class="form-group">
+          <label class="form-label">อีเมล หรือ ชื่อผู้ใช้</label>
+          <input class="form-input" type="text" name="identifier" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่าน</label>
+          <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn-gradient btn-block" type="submit">เข้าสู่ระบบ</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="authRegisterForm" class="auth-form hidden" onsubmit="window.app.handleRegister(event)">
+        <h2 class="modal-title">สร้างบัญชีใหม่ ✨</h2>
+        <p class="modal-subtitle">สมัครสมาชิกฟรี ไม่มีค่าใช้จ่าย</p>
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ใช้</label>
+          <input class="form-input" type="text" name="username" placeholder="puppy_lover" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">อีเมล</label>
+          <input class="form-input" type="email" name="email" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่าน</label>
+          <input class="form-input" type="password" name="password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required>
+        </div>
+        <button class="btn btn-gradient btn-block" type="submit">สมัครสมาชิก</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Post Modal -->
+  <div class="modal-overlay" id="postModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close-btn" onclick="window.app.closeModal('postModal')">✕</button>
+      <h2 class="modal-title">โพสต์รูปใหม่ 📸</h2>
+      <p class="modal-subtitle">แชร์ช่วงเวลาดีๆ กับเพื่อนๆ สี่ขา</p>
+
+      <div class="upload-area" id="postUploadArea">
+        <input type="file" accept="image/*" id="postFileInput" class="hidden">
+        <div class="upload-placeholder" id="postUploadPlaceholder">
+          <div class="upload-icon">🖼️</div>
+          <p>คลิกเพื่อเลือกรูปภาพ</p>
+          <button class="btn btn-secondary" type="button" onclick="document.getElementById('postFileInput').click()">เลือกไฟล์</button>
+        </div>
+        <img id="postImagePreview" class="upload-preview hidden" alt="Preview">
+      </div>
+
+      <div class="form-group" id="postCaptionGroup">
+        <label class="form-label">คำบรรยาย</label>
+        <textarea class="form-input" id="postCaption" placeholder="เล่าเรื่องราวของภาพนี้... 🐾"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ฟิลเตอร์</label>
+        <div class="filter-options" id="postFilterOptions"></div>
+      </div>
+
+      <button class="btn btn-gradient btn-block" type="button" onclick="window.app.submitPost()">โพสต์เลย!</button>
+    </div>
+  </div>
+
+  <!-- Create Story Modal -->
+  <div class="modal-overlay" id="storyModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="window.app.closeModal('storyModal')">✕</button>
+      <h2 class="modal-title">ลงสตอรี่ของคุณ ✨</h2>
+      <p class="modal-subtitle">สตอรี่จะหายไปอัตโนมัติในอีก 24 ชั่วโมง</p>
+
+      <div class="upload-area" id="storyUploadArea">
+        <input type="file" accept="image/*" id="storyFileInput" class="hidden">
+        <div class="upload-placeholder" id="storyUploadPlaceholder">
+          <div class="upload-icon">🎞️</div>
+          <p>คลิกเพื่อเลือกรูปภาพ</p>
+          <button class="btn btn-secondary" type="button" onclick="document.getElementById('storyFileInput').click()">เลือกไฟล์</button>
+        </div>
+        <img id="storyImagePreview" class="upload-preview hidden" alt="Preview">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ข้อความ</label>
+        <input class="form-input" id="storyCaption" placeholder="เขียนอะไรสักหน่อย...">
+      </div>
+
+      <button class="btn btn-gradient btn-block" type="button" onclick="window.app.submitStory()">ลงสตอรี่!</button>
+    </div>
+  </div>
+
+  <!-- Story Viewer Modal -->
+  <div class="modal-overlay story-viewer-overlay" id="storyViewerModal">
+    <div class="story-viewer">
+      <div class="story-viewer-header">
+        <img id="storyViewerAvatar" class="story-viewer-avatar" alt="avatar">
+        <div class="story-viewer-userinfo">
+          <div id="storyViewerUsername" class="story-viewer-username"></div>
+          <div id="storyViewerTime" class="story-viewer-time"></div>
+        </div>
+        <button class="modal-close-btn story-close" onclick="window.storyManager.closeViewer()">✕</button>
+      </div>
+      <div class="story-progress"><div id="storyProgressBar" class="story-progress-bar"></div></div>
+      <img id="storyViewerImage" class="story-viewer-image" alt="story">
+      <div class="story-viewer-nav left" onclick="window.storyManager.prevStory()"></div>
+      <div class="story-viewer-nav right" onclick="window.storyManager.nextStory()"></div>
+      <div class="story-viewer-footer">
+        <span id="storyViewerCaption" class="story-viewer-caption"></span>
+        <span id="storyViewerViews" class="story-viewer-views"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="window.app.closeModal('profileModal')">✕</button>
+      <h2 class="modal-title">แก้ไขโปรไฟล์ ✏️</h2>
+      <p class="modal-subtitle">อัปเดตข้อมูลของคุณ</p>
+
+      <div class="avatar-edit">
+        <img id="editAvatarPreview" class="avatar-edit-img" alt="avatar">
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('editAvatarInput').click()">เปลี่ยนรูปโปรไฟล์</button>
+        <input type="file" accept="image/*" id="editAvatarInput" class="hidden">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชื่อผู้ใช้</label>
+        <input class="form-input" id="editUsername" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ชื่อ - นามสกุล</label>
+        <input class="form-input" id="editFullName" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bio</label>
+        <textarea class="form-input" id="editBio"></textarea>
+      </div>
+
+      <button class="btn btn-gradient btn-block" type="button" onclick="window.app.saveProfile()">บันทึกการเปลี่ยนแปลง</button>
+    </div>
+  </div>
+
+  <!-- Login Gate (บังแอปจนกว่าจะล็อกอิน) -->
+  <div class="login-gate active" id="loginGate">
+    <div class="login-gate-card">
+      <div class="login-gate-brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <circle cx="12" cy="12" r="1"></circle>
+          </svg>
+        </div>
+        <div class="brand-text gradient-text">DogDog</div>
+      </div>
+      <h2 class="modal-title">เข้าสู่ระบบก่อน </h2>
+      <p class="modal-subtitle">ต้องล็อกอินหรือสมัครสมาชิกก่อนถึงจะเข้าใช้แอปได้</p>
+
+      <div class="auth-switch">
+        <button class="auth-switch-btn active" id="gateTabLogin" onclick="window.app.switchAuthTab('login','gate')">เข้าสู่ระบบ</button>
+        <button class="auth-switch-btn" id="gateTabRegister" onclick="window.app.switchAuthTab('register','gate')">สมัครสมาชิก</button>
+      </div>
+
+      <!-- Gate Login Form -->
+      <form id="gateLoginForm" onsubmit="window.app.handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">อีเมล หรือ ชื่อผู้ใช้</label>
+          <input class="form-input" type="text" name="identifier" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่าน</label>
+          <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button class="btn btn-gradient btn-block" type="submit">เข้าสู่ระบบ</button>
+      </form>
+
+      <!-- Gate Register Form -->
+      <form id="gateRegisterForm" class="hidden" onsubmit="window.app.handleRegister(event)">
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ใช้</label>
+          <input class="form-input" type="text" name="username" placeholder="puppy_lover" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">อีเมล</label>
+          <input class="form-input" type="email" name="email" placeholder="example@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รหัสผ่าน</label>
+          <input class="form-input" type="password" name="password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required>
+        </div>
+        <button class="btn btn-gradient btn-block" type="submit">สมัครสมาชิก</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Firebase Web SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/seedData.js"></script>
+  <script src="js/seedFirestore.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/post.js"></script>
+  <script src="js/story.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

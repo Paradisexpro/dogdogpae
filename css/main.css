@@ -1,0 +1,182 @@
+/* css/main.css - Global Styles, Theme Variables & Typography */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sukhumvit+Set&display=swap');
+
+:root {
+  /* Color Palette - Light Soft (ค่าเริ่มต้น) */
+  --bg-primary: #faf5ef;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f4ede4;
+  --border-color: rgba(108, 86, 66, 0.1);
+  --border-strong: rgba(108, 86, 66, 0.2);
+
+  --text-primary: #3d2c1d;
+  --text-secondary: #8a7768;
+  --text-muted: #bfae9f;
+
+  --brand-gradient: linear-gradient(120deg, #ff9a5a 0%, #ff6b5e 45%, #ff8fb0 100%);
+  --accent-pink: #ff6b5e;
+  --accent-blue: #5a9fd8;
+  --accent-green: #7fb89a;
+  --accent-amber: #f2b84b;
+  --accent-red: #e5533c;
+
+  --shadow-sm: 0 4px 16px rgba(115, 82, 55, 0.08);
+  --shadow-lg: 0 18px 44px rgba(115, 82, 55, 0.16);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+
+  --header-height: 68px;
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme (เลือกได้ผ่านปุ่มสลับธีม) */
+body.dark-theme {
+  --bg-primary: #171512;
+  --bg-secondary: #211d19;
+  --bg-card: #26211c;
+  --bg-hover: #322b25;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --text-primary: #f0e8df;
+  --text-secondary: #a99a8c;
+  --text-muted: #6f6258;
+
+  --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* App Container Layout */
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
+.gradient-text {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast), opacity var(--transition-fast), background-color var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-gradient {
+  background: var(--brand-gradient);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(255, 107, 94, 0.35);
+}
+.btn-gradient:hover {
+  opacity: 0.92;
+  box-shadow: 0 8px 24px rgba(255, 107, 94, 0.45);
+}
+
+.btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+.btn-secondary:hover {
+  background: var(--border-strong);
+}
+
+.btn-danger {
+  background: rgba(229, 83, 60, 0.12);
+  color: var(--accent-red);
+  border: 1px solid rgba(229, 83, 60, 0.3);
+}
+.btn-danger:hover {
+  background: var(--accent-red);
+  color: #ffffff;
+}
+
+.badge {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+.badge-admin {
+  background: rgba(242, 184, 75, 0.25);
+  color: #b9801a;
+  border: 1px solid rgba(242, 184, 75, 0.4);
+}
+.dark-theme .badge-admin {
+  color: var(--accent-amber);
+}
+.badge-user {
+  background: rgba(90, 159, 216, 0.2);
+  color: var(--accent-blue);
+  border: 1px solid rgba(90, 159, 216, 0.4);
+}
+.badge-banned {
+  background: rgba(229, 83, 60, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(229, 83, 60, 0.4);
+}
