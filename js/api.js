@@ -302,7 +302,7 @@ const api = {
       password: await this.hashPassword(password),
       role: 'user',
       rank: 'member',
-      dogcoin: 500, // โบนัสต้อนรับ
+      dogcoin: 0,
       fullName: cleanFullName,
       avatar: defaultAvatar,
       bio: '✨ สวัสดี! ยินดีต้อนรับสู่ DogDog 🐾',

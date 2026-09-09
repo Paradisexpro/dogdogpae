@@ -483,7 +483,7 @@ class App {
           ${rankCards}
         </div>
         <div class="shop-note">
-          💡 <b>วิธีได้ Dogcoin:</b> สมัครใหม่รับโบนัสต้อนรับ 🦴 500 และ Admin สามารถเติมให้ได้
+          💡 <b>วิธีได้ Dogcoin:</b> Admin จะเป็นผู้เติม Dogcoin อัตโนมัติเพื่อสิทธิพิเศษ
         </div>
       </div>
     `;
