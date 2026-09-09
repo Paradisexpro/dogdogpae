@@ -260,6 +260,10 @@
   margin: 0 auto;
 }
 
+.load-more-btn {
+  width: 100%;
+}
+
 .post-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);

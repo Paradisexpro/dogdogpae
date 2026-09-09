@@ -6,6 +6,7 @@ class App {
     this.viewingProfileId = null;
     this.selectedFilter = 'none';
     this.editAvatarDataUrl = null;
+    this.feedLimit = 12;
     this.init();
   }
 
@@ -657,7 +658,18 @@ class App {
       return;
     }
 
-    container.innerHTML = posts.map(p => this.postCardHTML(p)).join('');
+    const limit = Math.max(1, this.feedLimit || 12);
+    const shown = posts.slice(0, limit);
+    const remaining = posts.length - shown.length;
+    container.innerHTML = shown.map(p => this.postCardHTML(p)).join('') +
+      (remaining > 0
+        ? `<button class="btn btn-secondary load-more-btn" onclick="window.app.showMorePosts()">โหลดเพิ่มอีก ${remaining} โพสต์</button>`
+        : '');
+  }
+
+  showMorePosts() {
+    this.feedLimit = (this.feedLimit || 12) + 12;
+    this.renderFeed();
   }
 
   postCardHTML(post) {
@@ -681,7 +693,7 @@ class App {
 
     const mediaBlock = post.imageUrl ? `
       <div class="post-image-container" ondblclick="window.app.doubleTapLike(event,'${post.id}')">
-        <img class="post-image filter-${post.filter || 'none'}" src="${this.escapeHTML(post.imageUrl)}" alt="post">
+        <img class="post-image filter-${post.filter || 'none'}" src="${this.escapeHTML(post.imageUrl)}" alt="post" loading="lazy" decoding="async">
         <div class="heart-pop-animation" id="heartPop_${post.id}">❤️</div>
       </div>
     ` : `
@@ -700,7 +712,7 @@ class App {
         <div class="post-header">
           <a class="post-author" href="#" onclick="event.preventDefault();window.app.viewUser('${post.userId}')">
             <div class="avatar-rank-frame rank-${this.escapeHTML(rankKey)}">
-              <img class="post-author-avatar" src="${this.escapeHTML(post.userAvatar)}" alt="avatar">
+              <img class="post-author-avatar" src="${this.escapeHTML(post.userAvatar)}" alt="avatar" loading="lazy" decoding="async">
             </div>
             <div class="post-author-info">
               <span class="post-author-username">${this.escapeHTML(post.username)}</span>
