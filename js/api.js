@@ -13,7 +13,71 @@
 //   chats    : { id, participants[], messages[], // messages: {id, senderId, text, imageUrl, timestamp} }
 //   logs     : { id, type, text, timestamp }
 
+/* ============ ระบบยศ (RANK) ============ */
+// member (ฟรี) -> premium -> vip -> supervip
+// admin จะเป็นผู้กำหนดยศให้ผู้ใช้ได้
+// ทุกยศโพสต์ได้เท่ากันหมด ส่วนที่ต่างคือ กรอบโพสต์ เอฟเฟ็กต์ และกรอบรูปโปรไฟล์
+window.RANK_CONFIG = {
+  member: {
+    label: 'สมาชิก',
+    icon: '🐾',
+    price: 0,
+    avatarRes: 800,
+    perks: [
+      'โพสต์ได้เท่าทุกยศ ไม่จำกัดจำนวน',
+      'กรอบโพสต์ธรรมดา',
+      'กรอบโปรไฟล์สีฟ้า',
+      'ใช้ฟีเจอร์พื้นฐานทั้งหมด (โพสต์ สตอรี่ แชท ไลก์ คอมเมนต์)'
+    ]
+  },
+  premium: {
+    label: 'Premium',
+    icon: '💛',
+    price: 500,
+    avatarRes: 1080,
+    perks: [
+      'โพสต์ได้เท่าทุกยศ ไม่จำกัดจำนวน',
+      'กรอบโพสต์สีทอง',
+      'กรอบโปรไฟล์สีทอง บ่งบอกความเป็น Premium',
+      'ป้ายยศทองที่ชื่อ'
+    ]
+  },
+  vip: {
+    label: 'VIP',
+    icon: '💎',
+    price: 1500,
+    avatarRes: 1280,
+    perks: [
+      'โพสต์ได้เท่าทุกยศ ไม่จำกัดจำนวน',
+      'กรอบโพสต์สีม่วงเรืองแสง',
+      'กรอบโปรไฟล์สีม่วง-ฟ้าประกาย',
+      'ป้ายยศ VIP แบบเรืองแสง'
+    ]
+  },
+  supervip: {
+    label: 'Super VIP',
+    icon: '👑',
+    price: 4000,
+    avatarRes: 1600,
+    perks: [
+      'โพสต์ได้เท่าทุกยศ ไม่จำกัดจำนวน',
+      'กรอบโพสต์ไล่เฉดสีสุดพิเศษ + แสงกะพริบ',
+      'กรอบโปรไฟล์มงกุฎหลากสี',
+      'สิทธิพิเศษสูงสุดทั้งหมด'
+    ]
+  }
+};
+
+window.rankConfig = (rank) => window.RANK_CONFIG[rank] || window.RANK_CONFIG.member;
+
 const api = {
+  normalizeUser(u) {
+    if (!u) return u;
+    if (!u.rank) u.rank = 'member';
+    if (u.dogcoin == null) u.dogcoin = 0;
+    return u;
+  },
+
   async snapshot() {
     const db = window.firestoreDb;
     const [users, posts, stories, chats, logs] = await Promise.all([
@@ -31,7 +95,7 @@ const api = {
       if (session && session.userId) {
         const u = await this.getDoc(db, 'users', session.userId);
         if (u && !u.isBanned) {
-          me = u;
+          me = this.normalizeUser(u);
         } else if (u && u.isBanned) {
           // บัญชีถูกระงับ -> ล้าง session
           localStorage.removeItem('ig_token');
@@ -45,7 +109,8 @@ const api = {
     }
 
     const snap = {
-      users, posts, stories, chats, logs, me
+      users: users.map(u => this.normalizeUser(u)),
+      posts, stories, chats, logs, me
     };
     window.lastSnapshot = snap;
     return snap;
@@ -91,6 +156,11 @@ const api = {
       }
       if (path === '/stories/action') {
         return await this.storyAction(payload);
+      }
+
+      // ===== SHOP / RANK =====
+      if (path === '/shop/buy' && method === 'POST') {
+        return await this.purchaseRank(payload);
       }
 
       // ===== CHATS =====
@@ -202,7 +272,7 @@ const api = {
       userId: user.id, createdAt: new Date().toISOString()
     });
     await this.logActivity('auth', `ผู้ใช้ ${user.username} เข้าสู่ระบบแล้ว`);
-    return { token, user };
+    return { token, user: this.normalizeUser(user) };
   },
 
   async register({ username, fullName, email, password }) {
@@ -231,6 +301,8 @@ const api = {
       email: cleanEmail,
       password: await this.hashPassword(password),
       role: 'user',
+      rank: 'member',
+      dogcoin: 500, // โบนัสต้อนรับ
       fullName: cleanFullName,
       avatar: defaultAvatar,
       bio: '✨ สวัสดี! ยินดีต้อนรับสู่ DogDog 🐾',
@@ -309,24 +381,25 @@ const api = {
   },
 
   /* ===================== POSTS ===================== */
-  async createPost({ imageUrl, caption, filter }) {
-    const me = await this.currentUser();
-    const defaultImg = 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=1000&q=80';
+  async createPost({ imageUrl, caption, filter, link }) {
+    const me = this.normalizeUser(await this.currentUser());
+
     const post = {
       id: this.genId('post_'),
       userId: me.id,
       username: me.username,
       userAvatar: me.avatar,
-      imageUrl: imageUrl || defaultImg,
+      imageUrl: imageUrl || null,
       caption: caption || '',
       filter: filter || 'none',
+      link: link || null,
       likes: [],
       comments: [],
       bookmarks: [],
       createdAt: new Date().toISOString()
     };
     await this.setDoc(window.firestoreDb, 'posts', post.id, post);
-    await this.logActivity('post', `ผู้ใช้ ${me.username} โพสต์รูปใหม่`);
+    await this.logActivity('post', `ผู้ใช้ ${me.username} โพสต์ข้อความใหม่`);
     return { post };
   },
 
@@ -395,6 +468,30 @@ const api = {
     await this.setDoc(window.firestoreDb, 'stories', story.id, story);
     await this.logActivity('story', `ผู้ใช้ ${me.username} เพิ่มสตอรี่ใหม่`);
     return { story };
+  },
+
+  /* ===================== SHOP / BUY RANK ===================== */
+  async purchaseRank({ rank }) {
+    const me = this.normalizeUser(await this.currentUser());
+    const cfg = window.RANK_CONFIG[rank];
+    if (!cfg) this.error('ยศไม่ถูกต้อง');
+
+    const rankOrder = ['member', 'premium', 'vip', 'supervip'];
+    if (rankOrder.indexOf(rank) <= rankOrder.indexOf(me.rank || 'member')) {
+      this.error('คุณมียศนี้หรือสูงกว่าอยู่แล้ว');
+    }
+
+    const balance = Number(me.dogcoin || 0);
+    const price = Number(cfg.price);
+    if (balance < price) {
+      this.error(`เงินไม่พอ 🙁 ต้องใช้ 🦴 ${price.toLocaleString()} Dogcoin แต่คุณมี 🦴 ${balance.toLocaleString()}`);
+    }
+
+    me.dogcoin = balance - price;
+    me.rank = rank;
+    await this.setDoc(window.firestoreDb, 'users', me.id, me);
+    await this.logActivity('shop', `ผู้ใช้ ${me.username} ซี่ยศ ${cfg.icon} ${cfg.label} ด้วย 🦴 ${price.toLocaleString()} Dogcoin`);
+    return { success: true, rank, dogcoin: me.dogcoin, user: me };
   },
 
   async storyAction({ storyId, action }) {
@@ -510,14 +607,14 @@ const api = {
     return me;
   },
 
-  async adminAction({ action, userId }) {
-    const admin = await this.requireAdminUser();
+  async adminAction({ action, userId, rank, amount }) {
+    const admin = this.normalizeUser(await this.requireAdminUser());
     const db = window.firestoreDb;
     if (!action || !userId) this.error('กรอกข้อมูลไม่ครบ');
 
     if (action === 'toggle-ban') {
       if (userId === admin.id) this.error('ไม่สามารถระงับตัวเองได้');
-      const target = await this.getDoc(db, 'users', userId);
+      const target = this.normalizeUser(await this.getDoc(db, 'users', userId));
       if (!target) this.error('ไม่พบผู้ใช้', 404);
       target.isBanned = !target.isBanned;
       await this.setDoc(db, 'users', userId, target);
@@ -525,17 +622,40 @@ const api = {
       const sessions = await this.readAll(db, 'sessions');
       await Promise.all(sessions.filter(s => s.userId === userId).map(s => this.deleteDoc(db, 'sessions', s.id)));
       await this.logActivity('admin', `Admin ${admin.username} ${target.isBanned ? 'ระงับบัญชี' : 'ปลดระงับบัญชี'} ผู้ใช้ ${target.username}`);
-      return { success: true, isBanned: target.isBanned };
+      return { success: true, isBanned: target.isBanned, user: target };
     }
 
     if (action === 'toggle-role') {
       if (userId === admin.id) this.error('ไม่สามารถเปลี่ยนสิทธิ์ตัวเองได้');
-      const target = await this.getDoc(db, 'users', userId);
+      const target = this.normalizeUser(await this.getDoc(db, 'users', userId));
       if (!target) this.error('ไม่พบผู้ใช้', 404);
       target.role = target.role === 'admin' ? 'user' : 'admin';
       await this.setDoc(db, 'users', userId, target);
       await this.logActivity('admin', `Admin ${admin.username} เปลี่ยนสิทธิ์ ${target.username} เป็น ${target.role}`);
-      return { success: true, newRole: target.role };
+      return { success: true, newRole: target.role, user: target };
+    }
+
+    if (action === 'set-rank') {
+      const validRanks = Object.keys(window.RANK_CONFIG);
+      if (!validRanks.includes(rank)) this.error('ยศไม่ถูกต้อง');
+      const target = this.normalizeUser(await this.getDoc(db, 'users', userId));
+      if (!target) this.error('ไม่พบผู้ใช้', 404);
+      target.rank = rank;
+      await this.setDoc(db, 'users', userId, target);
+      await this.logActivity('admin', `Admin ${admin.username} ตั้งยศ ${target.rank} ให้ ${target.username}`);
+      return { success: true, rank, user: target };
+    }
+
+    if (action === 'set-dogcoin') {
+      const target = this.normalizeUser(await this.getDoc(db, 'users', userId));
+      if (!target) this.error('ไม่พบผู้ใช้', 404);
+      amount = Number(amount);
+      if (!isFinite(amount)) this.error('จำนวน Dogcoin ไม่ถูกต้อง');
+      amount = Math.max(0, Math.round(amount));
+      target.dogcoin = amount;
+      await this.setDoc(db, 'users', userId, target);
+      await this.logActivity('admin', `Admin ${admin.username} ตั้ง Dogcoin ของ ${target.username} เป็น 🦴 ${amount.toLocaleString()}`);
+      return { success: true, dogcoin: amount, user: target };
     }
 
     if (action === 'delete-user') {

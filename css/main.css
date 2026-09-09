@@ -180,3 +180,89 @@ body {
   color: var(--accent-red);
   border: 1px solid rgba(229, 83, 60, 0.4);
 }
+
+/* ===== Rank Badges ===== */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.rank-member {
+  background: rgba(90, 159, 216, 0.12);
+  color: var(--accent-blue);
+  border: 1px solid rgba(90, 159, 216, 0.3);
+}
+
+.rank-premium {
+  background: rgba(242, 184, 75, 0.18);
+  color: #b9801a;
+  border: 1px solid rgba(242, 184, 75, 0.45);
+}
+
+.dark-theme .rank-premium {
+  color: var(--accent-amber);
+}
+
+.rank-vip {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.9), rgba(59, 130, 246, 0.9));
+  color: #ffffff;
+  border: 1px solid rgba(129, 140, 248, 0.6);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+
+.rank-supervip {
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #a855f7 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.5);
+}
+
+/* ===== Rank Avatar Frame ===== */
+.avatar-rank-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #5a9fd8, #4dd0e1);
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.avatar-rank-frame.rank-member {
+  background: linear-gradient(135deg, #5a9fd8, #4dd0e1);
+}
+
+.avatar-rank-frame.rank-premium {
+  background: linear-gradient(135deg, #b9801a, #fbbf24);
+  box-shadow: 0 2px 8px rgba(242, 184, 75, 0.35);
+}
+
+.avatar-rank-frame.rank-vip {
+  background: linear-gradient(135deg, #6366f1, #38bdf8);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+}
+
+.avatar-rank-frame.rank-supervip {
+  background: conic-gradient(from 0deg, #f59e0b, #ef4444, #a855f7, #3b82f6, #f59e0b);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.45);
+}
+
+.avatar-rank-frame img {
+  border-radius: var(--radius-full);
+}
+
+.post-author .avatar-rank-frame,
+.post-author .avatar-rank-frame img {
+  border-radius: 14px;
+}

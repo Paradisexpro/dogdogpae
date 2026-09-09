@@ -1,5 +1,150 @@
 /* css/feed.css - Stories Bar & Post Feed Cards Styling */
 
+/* ===== Composer (หน้าแรก) ===== */
+.composer-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 26px;
+  box-shadow: var(--shadow-sm);
+}
+
+.composer-top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.composer-avatar {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+}
+
+.composer-input {
+  flex: 1;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  resize: none;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.composer-input:focus {
+  border-color: var(--primary);
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.composer-actions-left {
+  display: flex;
+  gap: 8px;
+}
+
+.composer-tool-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.composer-tool-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-sm {
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: var(--radius-full);
+}
+
+/* ===== Text-only post ===== */
+.post-text-block {
+  padding: 22px 18px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 60px;
+}
+
+/* ===== Link card ===== */
+.post-link-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 18px 6px;
+  padding: 10px 14px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: border-color var(--transition-fast);
+}
+
+.post-link-card:hover {
+  border-color: var(--primary);
+}
+
+.post-link-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.post-link-url {
+  font-size: 13px;
+  color: var(--primary);
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== Profile grid text tile ===== */
+.posts-grid-text {
+  background: var(--bg-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.posts-grid-text-inner {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
 /* ===== Stories Bar ===== */
 .stories-bar {
   background-color: var(--bg-secondary);
@@ -38,6 +183,26 @@
   justify-content: center;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   box-shadow: 0 4px 12px rgba(255, 107, 94, 0.25);
+}
+
+.story-avatar-wrapper.rank-member {
+  background: linear-gradient(135deg, #5a9fd8, #4dd0e1);
+  box-shadow: 0 4px 12px rgba(90, 159, 216, 0.25);
+}
+
+.story-avatar-wrapper.rank-premium {
+  background: linear-gradient(135deg, #b9801a, #fbbf24);
+  box-shadow: 0 4px 12px rgba(242, 184, 75, 0.3);
+}
+
+.story-avatar-wrapper.rank-vip {
+  background: linear-gradient(135deg, #6366f1, #38bdf8);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.story-avatar-wrapper.rank-supervip {
+  background: conic-gradient(from 0deg, #f59e0b, #ef4444, #a855f7, #3b82f6, #2dd4bf, #f59e0b);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
 }
 
 .story-item:hover .story-avatar-wrapper {
@@ -101,6 +266,31 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+/* ===== Post frame per rank ===== */
+.post-frame-premium {
+  border: 2px solid rgba(242, 184, 75, 0.55);
+  box-shadow: var(--shadow-sm), 0 0 0 3px rgba(242, 184, 75, 0.12);
+}
+
+.post-frame-vip {
+  border: 2px solid rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.22);
+}
+
+.post-frame-supervip {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+    conic-gradient(from 0deg, #f59e0b, #ef4444, #a855f7, #3b82f6, #2dd4bf, #f59e0b) border-box;
+  animation: supervipGlow 2.6s ease-in-out infinite;
+}
+
+@keyframes supervipGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.35); }
+  50% { box-shadow: 0 0 24px rgba(168, 85, 247, 0.6); }
 }
 
 .post-header {

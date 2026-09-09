@@ -7,13 +7,21 @@ class AdminManager {
     const stories = window.storyManager.getStories();
     const chats = window.chatManager.getChats();
     const totalMessages = chats.reduce((n, c) => n + (c.messages || []).length, 0);
+    const ranks = { member: 0, premium: 0, vip: 0, supervip: 0 };
+    users.forEach(u => {
+      const r = (u.rank && ranks[u.rank] !== undefined) ? u.rank : 'member';
+      ranks[r]++;
+    });
+    const totalDogcoin = users.reduce((n, u) => n + Number(u.dogcoin || 0), 0);
     return {
       totalUsers: users.length,
       adminUsers: users.filter(u => u.role === 'admin').length,
       bannedUsers: users.filter(u => u.isBanned).length,
       totalPosts: posts.length,
       activeStories: stories.length,
-      totalMessages
+      totalMessages,
+      totalDogcoin,
+      ranks
     };
   }
 
@@ -67,6 +75,30 @@ class AdminManager {
       const res = await window.api.post('/admin/actions', { action: 'toggle-role', userId });
       this.mergeUser(res.user);
       return { success: true, newRole: res.newRole };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // Set Rank (member / premium / vip / supervip)
+  async setUserRank(userId, rank) {
+    if (!this.canAdmin()) return { success: false, error: 'ไม่มีสิทธิ์เข้าถึง' };
+    if (!window.RANK_CONFIG[rank]) return { success: false, error: 'ยศไม่ถูกต้อง' };
+    try {
+      const res = await window.api.post('/admin/actions', { action: 'set-rank', userId, rank });
+      this.mergeUser(res.user);
+      return { success: true, rank: res.rank };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  async setUserDogcoin(userId, amount) {
+    if (!this.canAdmin()) return { success: false, error: 'ไม่มีสิทธิ์เข้าถึง' };
+    try {
+      const res = await window.api.post('/admin/actions', { action: 'set-dogcoin', userId, amount });
+      this.mergeUser(res.user);
+      return { success: true, dogcoin: res.dogcoin };
     } catch (e) {
       return { success: false, error: e.message };
     }

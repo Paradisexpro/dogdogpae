@@ -18,6 +18,8 @@ async function seedFirestore() {
       email: u.email,
       password: await hash(u.password),
       role: u.role,
+      rank: u.rank || 'member',
+      dogcoin: u.dogcoin || 0,
       fullName: u.fullName,
       avatar: u.avatar,
       bio: u.bio,

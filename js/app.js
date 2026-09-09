@@ -23,6 +23,18 @@ class App {
       });
     });
 
+    // Delegated clicks on mobile bottom nav
+    const mobileNav = document.getElementById('mobileNav');
+    if (mobileNav) {
+      mobileNav.addEventListener('click', e => {
+        const item = e.target.closest('[data-tab]');
+        if (item) {
+          e.preventDefault();
+          this.setTab(item.dataset.tab);
+        }
+      });
+    }
+
     // Close modal on overlay click
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', e => {
@@ -210,6 +222,23 @@ class App {
       .split("'").join('&#39;');
   }
 
+  rankInfo(rank) {
+    const cfg = window.RANK_CONFIG && window.RANK_CONFIG[rank];
+    if (!cfg && rank !== 'member') return this.rankInfo('member');
+    return cfg || { label: 'สมาชิก', icon: '🐾' };
+  }
+
+  rankKey(user) {
+    const r = user && user.rank;
+    return (r && window.RANK_CONFIG[r]) ? r : 'member';
+  }
+
+  rankBadgeHTML(user) {
+    const rank = (user && user.rank) || 'member';
+    const cfg = this.rankInfo(rank);
+    return `<span class="rank-badge rank-${this.escapeHTML(rank)}" title="${cfg.label}: ${(cfg.perks || []).join(', ')}">${cfg.icon} ${this.escapeHTML(cfg.label)}</span>`;
+  }
+
   timeAgo(iso) {
     const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
     if (diff < 60) return 'เมื่อสักครู่';
@@ -253,7 +282,9 @@ class App {
       if (id === 'postFileInput') {
         const file = e.target.files[0];
         if (!file) return;
-        this.compressImage(file).then(dataUrl => {
+        const me = window.authManager.currentUser;
+        const maxRes = me ? this.rankInfo(me.rank).avatarRes : 800;
+        this.compressImage(file, maxRes).then(dataUrl => {
           const img = document.getElementById('postImagePreview');
           img.src = dataUrl;
           img.classList.remove('hidden');
@@ -303,11 +334,20 @@ class App {
     if (me) {
       html = `
         <div class="user-profile-btn" onclick="window.app.viewUser('${me.id}')">
-          <img class="user-avatar-sm" src="${this.escapeHTML(me.avatar)}" alt="avatar">
+          <div class="avatar-rank-frame rank-${this.rankKey(me)}">
+            <img class="user-avatar-sm" src="${this.escapeHTML(me.avatar)}" alt="avatar">
+          </div>
           <div class="user-meta-info">
             <span class="user-meta-name">${this.escapeHTML(me.username)}</span>
-            <span class="user-meta-role">${me.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : '<span class="badge badge-user">User</span>'}</span>
+            <span class="user-meta-role">
+              ${me.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : ''}
+              ${this.rankBadgeHTML(me)}
+            </span>
           </div>
+        </div>
+        <div class="dogcoin-chip" onclick="window.app.setTab('shop')" title="ซื้อยศด้วย Dogcoin">
+          <span class="dogcoin-icon">🦴</span>
+          <span class="dogcoin-amount">${Number(me.dogcoin || 0).toLocaleString()}</span>
         </div>
         <button class="btn btn-secondary" onclick="window.app.toggleTheme()">${document.body.classList.contains('dark-theme') ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด'}</button>
         <button class="btn btn-danger" onclick="window.app.logout()">ออกจากระบบ</button>
@@ -319,12 +359,34 @@ class App {
       `;
     }
     footer.innerHTML = html;
+    this.renderMobileNav();
+  }
+
+  renderMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    if (!nav) return;
+    const me = window.authManager.currentUser;
+    const tabs = [
+      { tab: 'home', icon: '🏠', label: 'หน้าแรก' },
+      { tab: 'chat', icon: '💬', label: 'ข้อความ', badge: true },
+      { tab: 'shop', icon: '🛍️', label: 'ซื้อยศ' },
+      { tab: 'profile', icon: '👤', label: 'โปรไฟล์' }
+    ];
+    if (me && me.role === 'admin') tabs.push({ tab: 'admin', icon: '🛡️', label: 'Admin' });
+    nav.innerHTML = tabs.map(t => `
+      <a href="#" class="mobile-nav-item ${this.currentTab === t.tab ? 'active' : ''}" data-tab="${t.tab}">
+        <span class="mobile-nav-icon">${t.icon}</span>
+        <span class="mobile-nav-label">${t.label}</span>
+        ${t.badge ? '<span class="badge-counter hidden" id="mobileChatBadge">0</span>' : ''}
+      </a>
+    `).join('');
   }
 
   toggleTheme() {
     document.body.classList.toggle('dark-theme');
     localStorage.setItem('ig_theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
     this.renderSidebarFooter();
+    if (this.currentTab === 'profile' || this.currentTab === 'home') this.renderContent();
   }
 
   /* ===================== NAVIGATION ===================== */
@@ -333,6 +395,7 @@ class App {
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
     });
+    this.renderMobileNav();
     this.renderContent();
   }
 
@@ -348,6 +411,9 @@ class App {
     } else if (this.currentTab === 'profile') {
       if (!me) { content.innerHTML = this.loginPromptHTML(); return; }
       this.renderProfile(content, this.viewingProfileId || me.id);
+    } else if (this.currentTab === 'shop') {
+      if (!me) { content.innerHTML = this.loginPromptHTML(); return; }
+      this.renderShop(content);
     } else if (this.currentTab === 'admin') {
       this.renderAdmin(content);
     }
@@ -362,6 +428,88 @@ class App {
         <button class="btn btn-gradient" onclick="window.app.openModal('authModal')">เข้าสู่ระบบ</button>
       </div>
     `;
+  }
+
+  /* ===================== SHOP / ซื้อยศ ===================== */
+  renderShop(content) {
+    const me = window.authManager.currentUser;
+    const cfg = window.RANK_CONFIG;
+    const rankOrder = ['member', 'premium', 'vip', 'supervip'];
+    const myIdx = rankOrder.indexOf(this.rankKey(me));
+    const balance = Number(me.dogcoin || 0);
+
+    function perksList(perks) {
+      return perks.map(p => `<li>${p}</li>`).join('');
+    }
+
+    const rankCards = rankOrder
+      .map(r => {
+        const c = cfg[r];
+        const owned = myIdx >= rankOrder.indexOf(r);
+        let btn;
+        if (r === 'member') {
+          btn = `<button class="btn btn-sm shop-btn disabled" disabled>🐾 ยศเริ่มต้น (ฟรี)</button>`;
+        } else if (owned) {
+          btn = `<button class="btn btn-sm shop-btn disabled" disabled>✅ เป็นยศปัจจุบันแล้ว</button>`;
+        } else if (balance < c.price) {
+          btn = `<button class="btn btn-sm shop-btn disabled" disabled>🦴 เงินไม่พอ</button>`;
+        } else {
+          btn = `<button class="btn btn-sm btn-gradient shop-btn" onclick="window.app.buyRank('${r}')">ซื้อเลย 🦴 ${c.price.toLocaleString()}</button>`;
+        }
+        return `
+          <div class="shop-rank-card post-frame-${r}">
+            <div class="shop-rank-head">
+              <div class="shop-rank-icon">${c.icon}</div>
+              <h3 class="shop-rank-name">${c.label}</h3>
+              <span class="rank-badge rank-${r}">${c.label}</span>
+            </div>
+            <div class="shop-rank-price">🦴 ${c.price.toLocaleString()} <span>Dogcoin</span></div>
+            <ul class="shop-rank-perks">${perksList(c.perks)}</ul>
+            ${btn}
+          </div>
+        `;
+      })
+      .join('');
+
+    content.innerHTML = `
+      <div class="shop-page">
+        <div class="shop-header">
+          <h2>ซื้อยศสมาชิก 🛍️</h2>
+          <p>ใช้ Dogcoin (🦴) ซื้อของเพื่อสิทธิพิเศษสุดเจ๋ง!</p>
+          <div class="dogcoin-balance">🦴 ${balance.toLocaleString()} <span>Dogcoin</span></div>
+          <div class="shop-current-rank">ยศปัจจุบัน: ${cfg[this.rankKey(me)].icon} ${cfg[this.rankKey(me)].label}</div>
+        </div>
+        <div class="shop-rank-grid">
+          ${rankCards}
+        </div>
+        <div class="shop-note">
+          💡 <b>วิธีได้ Dogcoin:</b> สมัครใหม่รับโบนัสต้อนรับ 🦴 500 และ Admin สามารถเติมให้ได้
+        </div>
+      </div>
+    `;
+  }
+
+  async buyRank(rank) {
+    const cfg = window.RANK_CONFIG[rank];
+    const me = window.authManager.currentUser;
+    if (!cfg || !me) return;
+    if (!confirm(`ยืนยันซื้อยศ ${cfg.icon} ${cfg.label} ด้วย 🦴 ${cfg.price.toLocaleString()} Dogcoin?\n\nยอดคงเหลือปัจจุบัน: 🦴 ${Number(me.dogcoin || 0).toLocaleString()}`)) return;
+
+    const btns = document.querySelectorAll('.shop-page .shop-btn');
+    btns.forEach(b => { b.disabled = true; });
+
+    try {
+      const res = await window.api.post('/shop/buy', { rank });
+      window.authManager.currentUser = res.user;
+      if (window.adminManager) window.adminManager.mergeUser(res.user);
+      this.showToast(`ซื้อยศ ${cfg.icon} ${cfg.label} สำเร็จ! เหลือ 🦴 ${res.dogcoin.toLocaleString()}`);
+      this.renderSidebarFooter();
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === 'shop'));
+      this.renderContent();
+    } catch (err) {
+      this.showToast(err.message || 'ซื้อไม่สำเร็จ', true);
+      btns.forEach(b => { b.disabled = false; });
+    }
   }
 
   /* ===================== HOME / FEED ===================== */
@@ -381,14 +529,60 @@ class App {
       `;
     }
 
+    let composer = '';
+    if (me) {
+      composer = `
+        <div class="composer-card">
+          <div class="composer-top">
+            <div class="avatar-rank-frame rank-${this.rankKey(me)}">
+              <img class="user-avatar-sm composer-avatar" src="${this.escapeHTML(me.avatar)}" alt="avatar">
+            </div>
+            <textarea class="composer-input" id="composerInput" rows="2" placeholder="คุณคิดอะไรอยู่? แชร์เรื่องราวน้องหมา 🐾 หรือวางลิงก์ได้เลย!"></textarea>
+          </div>
+          <div class="composer-actions">
+            <div class="composer-actions-left">
+              <button class="composer-tool-btn" onclick="window.app.openPostModal()">📷 รูปภาพ</button>
+              <button class="composer-tool-btn" onclick="window.app.composerFocusLink()">🔗 แชร์ลิงก์</button>
+            </div>
+            <button class="btn btn-gradient btn-sm" onclick="window.app.submitHomePost()">โพสต์</button>
+          </div>
+        </div>
+      `;
+    }
+
     content.innerHTML = `
       ${welcome}
+      ${composer}
       <div id="storiesBar"></div>
       <div class="feed-container" id="feed"></div>
     `;
 
     this.renderStoriesBar();
     this.renderFeed();
+  }
+
+  composerFocusLink() {
+    const ta = document.getElementById('composerInput');
+    if (ta) ta.focus();
+  }
+
+  async submitHomePost() {
+    if (!window.authManager.currentUser) { this.showToast('กรุณาเข้าสู่ระบบก่อนโพสต์'); this.openModal('authModal'); return; }
+    const ta = document.getElementById('composerInput');
+    const text = (ta ? ta.value : '').trim();
+    if (!text) { this.showToast('กรุณาพิมพ์ข้อความหรือวางลิงก์'); return; }
+    const link = this.extractLink(text);
+    const res = await window.postManager.createPost({ imageUrl: null, caption: text, filter: 'none', link });
+    if (!res.success) { this.showToast(res.error); return; }
+    if (ta) ta.value = '';
+    this.showToast('โพสต์สำเร็จ! 🎉');
+    this.renderFeed();
+  }
+
+  extractLink(text) {
+    const re = /https?:\/\/[^\s]+/i;
+    const m = String(text || '').match(re);
+    return m ? m[0].replace(/[\)\]\.,;:!?"']+$/, '') : null;
   }
 
   renderStoriesBar() {
@@ -410,7 +604,7 @@ class App {
     if (me) {
       html += `
         <div class="story-item my-add-story" onclick="window.app.openStoryModal()">
-          <div class="story-avatar-wrapper">
+          <div class="story-avatar-wrapper rank-${this.rankKey(me)}">
             <img class="story-avatar-img" src="${this.escapeHTML(me.avatar)}" alt="my">
             <div class="add-story-plus">+</div>
           </div>
@@ -420,7 +614,7 @@ class App {
     } else {
       html += `
         <div class="story-item my-add-story" onclick="window.app.openModal('authModal')">
-          <div class="story-avatar-wrapper">
+          <div class="story-avatar-wrapper rank-member">
             <img class="story-avatar-img" src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=300&q=80" alt="login">
             <div class="add-story-plus">+</div>
           </div>
@@ -430,10 +624,12 @@ class App {
     }
 
     // Story items
+    const allUsers = window.authManager.getUsers();
     grouped.forEach(s => {
+      const storyAuthor = allUsers.find(u => u.id === s.userId) || {};
       html += `
         <div class="story-item" onclick="window.storyManager.openViewer('${s.id}')">
-          <div class="story-avatar-wrapper">
+          <div class="story-avatar-wrapper rank-${this.rankKey(storyAuthor)}">
             <img class="story-avatar-img" src="${this.escapeHTML(s.userAvatar)}" alt="${this.escapeHTML(s.username)}">
           </div>
           <span class="story-username">${this.escapeHTML(s.username)}</span>
@@ -455,7 +651,7 @@ class App {
         <div class="empty-state">
           <div class="empty-state-icon">📸</div>
           <h3>ยังไม่มีโพสต์</h3>
-          <p>มาเป็นคนแรกที่โพสรูป!</p>
+          <p>มาเป็นคนแรกที่โพสต์ข้อความหรือรูปภาพ!</p>
         </div>
       `;
       return;
@@ -466,34 +662,56 @@ class App {
 
   postCardHTML(post) {
     const me = window.authManager.currentUser;
+    const author = window.authManager.getUsers().find(u => u.id === post.userId) || {};
     const liked = me && post.likes.includes(me.id);
     const bookmarked = me && post.bookmarks.includes(me.id);
     const canDelete = me && (post.userId === me.id || window.authManager.isAdmin());
+    const link = post.link || this.extractLink(post.caption);
+    const rankKey = this.rankKey(author);
 
-    const commentsHTML = (post.comments || []).map(c => `
+    const commentsHTML = (post.comments || []).map(c => {
+      const commentAuthor = window.authManager.getUsers().find(u => u.id === c.userId);
+      return `
       <div class="comment-item">
-        <span class="comment-username">${this.escapeHTML(c.username)}</span>
+        <span class="comment-username">${this.escapeHTML(c.username)} ${commentAuthor ? this.rankBadgeHTML(commentAuthor) : ''}</span>
         <span class="comment-text">${this.escapeHTML(c.text)}</span>
       </div>
-    `).join('');
+    `;
+    }).join('');
+
+    const mediaBlock = post.imageUrl ? `
+      <div class="post-image-container" ondblclick="window.app.doubleTapLike(event,'${post.id}')">
+        <img class="post-image filter-${post.filter || 'none'}" src="${this.escapeHTML(post.imageUrl)}" alt="post">
+        <div class="heart-pop-animation" id="heartPop_${post.id}">❤️</div>
+      </div>
+    ` : `
+      <div class="post-text-block">${this.escapeHTML(post.caption || '')}</div>
+    `;
+
+    const linkCard = link ? `
+      <a class="post-link-card" href="${this.escapeHTML(link)}" target="_blank" rel="noopener">
+        <span class="post-link-icon">🔗</span>
+        <span class="post-link-url">${this.escapeHTML(link)}</span>
+      </a>
+    ` : '';
 
     return `
-      <article class="post-card" id="post_${post.id}">
+      <article class="post-card post-frame-${this.escapeHTML(rankKey)}" id="post_${post.id}">
         <div class="post-header">
           <a class="post-author" href="#" onclick="event.preventDefault();window.app.viewUser('${post.userId}')">
-            <img class="post-author-avatar" src="${this.escapeHTML(post.userAvatar)}" alt="avatar">
+            <div class="avatar-rank-frame rank-${this.escapeHTML(rankKey)}">
+              <img class="post-author-avatar" src="${this.escapeHTML(post.userAvatar)}" alt="avatar">
+            </div>
             <div class="post-author-info">
               <span class="post-author-username">${this.escapeHTML(post.username)}</span>
+              ${this.rankBadgeHTML(author)}
               <span class="post-time">${this.timeAgo(post.createdAt)}</span>
             </div>
           </a>
           ${canDelete ? `<button class="post-options-btn" title="ลบโพสต์" onclick="window.app.deletePost('${post.id}')">⋯</button>` : ''}
         </div>
 
-        <div class="post-image-container" ondblclick="window.app.doubleTapLike(event,'${post.id}')">
-          <img class="post-image filter-${post.filter || 'none'}" src="${this.escapeHTML(post.imageUrl)}" alt="post">
-          <div class="heart-pop-animation" id="heartPop_${post.id}">❤️</div>
-        </div>
+        ${mediaBlock}
 
         <div class="post-actions">
           <div class="post-actions-left">
@@ -522,10 +740,12 @@ class App {
         </div>
 
         <div class="post-likes-count" id="likeCount_${post.id}">${(post.likes || []).length} ถูกใจ</div>
+        ${post.imageUrl ? `
         <div class="post-caption-box">
           <span class="post-caption-username">${this.escapeHTML(post.username)}</span>
           <span>${this.escapeHTML(post.caption || '')}</span>
         </div>
+        ` : linkCard}
 
         <div class="post-comments-list" id="comments_${post.id}">
           ${commentsHTML || '<div class="comment-item"><span class="comment-text" style="color:var(--text-muted);">ยังไม่มีคอมเมนต์</span></div>'}
@@ -666,8 +886,10 @@ class App {
       imageUrl = img.src;
     }
 
-    const caption = document.getElementById('postCaption').value;
-    const res = await window.postManager.createPost({ imageUrl, caption, filter: this.selectedFilter });
+    const caption = (document.getElementById('postCaption').value || '').trim();
+    if (!caption && !hasImage) { this.showToast('กรุณาใส่ข้อความหรือรูปภาพ'); return; }
+    const link = this.extractLink(caption);
+    const res = await window.postManager.createPost({ imageUrl, caption, filter: this.selectedFilter, link });
     if (!res.success) { this.showToast(res.error); return; }
 
     this.closeModal('postModal');
@@ -764,9 +986,11 @@ class App {
       const lastSenderName = last && last.senderId === me.id ? 'คุณ: ' : (last && last.senderId === u.id ? u.username + ': ' : '');
       return `
         <div class="chat-list-item ${active ? 'active' : ''}" onclick="window.app.openChat('${u.id}')">
-          <img class="chat-list-avatar" src="${this.escapeHTML(u.avatar)}" alt="avatar">
+          <div class="avatar-rank-frame rank-${this.rankKey(u)}">
+            <img class="chat-list-avatar" src="${this.escapeHTML(u.avatar)}" alt="avatar">
+          </div>
           <div class="chat-list-info">
-            <div class="chat-list-name">${this.escapeHTML(u.username)}</div>
+            <div class="chat-list-name">${this.escapeHTML(u.username)} ${this.rankBadgeHTML(u)}</div>
             <div class="chat-list-preview">${this.escapeHTML(lastSenderName)}${this.escapeHTML(preview)}</div>
           </div>
           <span class="chat-list-time">${time}</span>
@@ -800,9 +1024,11 @@ class App {
   chatConversationHTML(partner) {
     return `
       <div class="chat-conv-header">
-        <img class="chat-conv-avatar" src="${this.escapeHTML(partner.avatar)}" alt="avatar">
+        <div class="avatar-rank-frame rank-${this.rankKey(partner)}">
+          <img class="chat-conv-avatar" src="${this.escapeHTML(partner.avatar)}" alt="avatar">
+        </div>
         <div>
-          <div class="chat-conv-name">${this.escapeHTML(partner.username)}</div>
+          <div class="chat-conv-name">${this.escapeHTML(partner.username)} ${this.rankBadgeHTML(partner)}</div>
           ${partner.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : ''}
         </div>
       </div>
@@ -932,6 +1158,15 @@ class App {
     } else {
       badge.classList.add('hidden');
     }
+    const mobileBadge = document.getElementById('mobileChatBadge');
+    if (mobileBadge) {
+      if (unread > 0) {
+        mobileBadge.textContent = unread > 9 ? '9+' : unread;
+        mobileBadge.classList.remove('hidden');
+      } else {
+        mobileBadge.classList.add('hidden');
+      }
+    }
   }
 
   /* ===================== PROFILE ===================== */
@@ -962,7 +1197,15 @@ class App {
     if (isMe) {
       actions = `
         <button class="btn btn-secondary" onclick="window.app.openProfileEdit()">✏️ แก้ไขโปรไฟล์</button>
-        <button class="btn btn-gradient" onclick="window.app.openPostModal()">📸 โพสต์รูป</button>
+        <button class="btn btn-gradient" onclick="window.app.openPostModal()">📝 โพสต์ใหม่</button>
+        <div class="profile-mobile-actions">
+          <div class="dogcoin-chip" onclick="window.app.setTab('shop')" style="margin-bottom:0;">
+            <span class="dogcoin-icon">🦴</span>
+            <span class="dogcoin-amount">${Number(me.dogcoin || 0).toLocaleString()}</span>
+          </div>
+          <button class="btn btn-secondary" onclick="window.app.toggleTheme()">${document.body.classList.contains('dark-theme') ? '☀️ โหมดสว่าง' : '🌙 โหมดมืด'}</button>
+          <button class="btn btn-danger" onclick="window.app.logout()">ออกจากระบบ</button>
+        </div>
       `;
     } else {
       actions = `
@@ -973,9 +1216,17 @@ class App {
       `;
     }
 
-    const gridHTML = posts.length ? posts.map(p => `
+    const gridHTML = posts.length ? posts.map(p => p.imageUrl ? `
       <div class="posts-grid-item" onclick="window.app.viewPost('${p.id}')">
         <img src="${this.escapeHTML(p.imageUrl)}" alt="post" class="filter-${p.filter || 'none'}">
+        <div class="posts-grid-overlay">
+          <span>❤️ ${(p.likes || []).length}</span>
+          <span>💬 ${(p.comments || []).length}</span>
+        </div>
+      </div>
+    ` : `
+      <div class="posts-grid-item posts-grid-text" onclick="window.app.viewPost('${p.id}')">
+        <div class="posts-grid-text-inner">💬 ${this.escapeHTML((p.caption || 'โพสต์ข้อความ').slice(0, 60))}</div>
         <div class="posts-grid-overlay">
           <span>❤️ ${(p.likes || []).length}</span>
           <span>💬 ${(p.comments || []).length}</span>
@@ -986,12 +1237,13 @@ class App {
     content.innerHTML = `
       <div class="profile-page">
         <div class="profile-header">
-          <div class="profile-avatar">
+          <div class="profile-avatar rank-${this.rankKey(user)}">
             <img src="${this.escapeHTML(user.avatar)}" alt="avatar">
           </div>
           <div class="profile-info">
             <div class="profile-top">
               <span class="profile-username">${this.escapeHTML(user.username)}</span>
+              ${this.rankBadgeHTML(user)}
               ${user.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : ''}
               ${user.isBanned ? '<span class="badge badge-banned">Banned</span>' : ''}
             </div>
@@ -1015,6 +1267,14 @@ class App {
 
         <div class="profile-fullname">${this.escapeHTML(user.fullName)}</div>
         <div class="profile-bio">${this.escapeHTML(user.bio || '')}</div>
+
+        <div class="rank-perks-card rank-${this.escapeHTML((user.rank || 'member'))}">
+          <div class="rank-perks-title">${this.rankInfo(user.rank).icon} ยศ ${this.escapeHTML(this.rankInfo(user.rank).label)} — สิทธิพิเศษ</div>
+          <div class="rank-perks-list">
+            ${this.rankInfo(user.rank).perks.map(p => `<span class="rank-perk-item">✔ ${this.escapeHTML(p)}</span>`).join('')}
+          </div>
+          ${me && user.id === me.id ? '<button class="btn btn-sm btn-gradient" style="margin-top:10px;" onclick="window.app.setTab(\'shop\')">🛍️ ซื้อ / อัปเกรดยศ</button>' : ''}
+        </div>
 
         <div class="profile-tabs">
           <button class="profile-tab-btn active">โพสต์</button>
@@ -1139,6 +1399,10 @@ class App {
           <div class="stat-card-icon" style="background:rgba(154,163,180,0.15);">💬</div>
           <div><div class="stat-card-value">${stats.totalMessages}</div><div class="stat-card-label">ข้อความทั้งหมด</div></div>
         </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:rgba(217,119,6,0.15);">🦴</div>
+          <div><div class="stat-card-value">${Number(stats.totalDogcoin || 0).toLocaleString()}</div><div class="stat-card-label">Dogcoin ทั้งหมด</div></div>
+        </div>
       </div>
 
       <div class="admin-section">
@@ -1146,7 +1410,7 @@ class App {
         <table class="admin-table">
           <thead>
             <tr>
-              <th>ผู้ใช้</th><th>อีเมล</th><th>บทบาท</th><th>สถานะ</th><th>จัดการ</th>
+              <th>ผู้ใช้</th><th>อีเมล</th><th>บทบาท</th><th>ยศ</th><th>Dogcoin 🦴</th><th>สถานะ</th><th>จัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -1216,9 +1480,26 @@ class App {
         </td>
         <td>${this.escapeHTML(u.email)}</td>
         <td>${u.role === 'admin' ? '<span class="badge badge-admin">Admin</span>' : '<span class="badge badge-user">User</span>'}</td>
+        <td>
+          <div class="admin-rank-cell">
+            ${this.rankBadgeHTML(u)}
+          </div>
+        </td>
+        <td>
+          <div class="admin-coin-set">
+            <input class="coin-input" type="number" min="0" value="${Number(u.dogcoin || 0)}" id="coinInput_${this.escapeHTML(u.id)}">
+            <button class="admin-mini-btn promo" onclick="window.app.adminSetDogcoin('${this.escapeHTML(u.id)}')">ตั้ง</button>
+          </div>
+        </td>
         <td>${u.isBanned ? '<span class="badge badge-banned">Banned</span>' : '<span class="badge badge-user">ปกติ</span>'}</td>
         <td>
           <div class="admin-actions">
+            <div class="admin-rank-set">
+              <select class="rank-select" id="rankSelect_${this.escapeHTML(u.id)}">
+                ${Object.keys(window.RANK_CONFIG).map(r => `<option value="${r}" ${(u.rank || 'member') === r ? 'selected' : ''}>${window.RANK_CONFIG[r].icon} ${window.RANK_CONFIG[r].label}</option>`).join('')}
+              </select>
+              <button class="admin-mini-btn promo" onclick="window.app.adminSetRank('${this.escapeHTML(u.id)}')">ตั้งยศ</button>
+            </div>
             ${isSelf ? '<span style="color:var(--text-muted);font-size:11px;">(คุณ)</span>' : `
               <button class="admin-mini-btn promo" onclick="window.app.adminToggleRole('${u.id}')">${u.role === 'admin' ? 'ถอดสิทธิ์' : 'แต่งตั้ง Admin'}</button>
               <button class="admin-mini-btn ban" onclick="window.app.adminToggleBan('${u.id}')">${u.isBanned ? 'ปลดระงับ' : 'ระงับ'}</button>
@@ -1242,6 +1523,35 @@ class App {
     const res = await window.adminManager.toggleUserRole(userId);
     if (!res.success) { this.showToast(res.error); return; }
     this.showToast(res.newRole === 'admin' ? 'แต่งตั้งเป็น Admin แล้ว 🛡️' : 'ถอดสิทธิ์ Admin แล้ว');
+    await window.adminManager.refreshLogs();
+    this.renderAdmin(document.getElementById('content'));
+  }
+
+  async adminSetRank(userId) {
+    const sel = document.getElementById('rankSelect_' + userId);
+    const rank = sel ? sel.value : 'member';
+    const res = await window.adminManager.setUserRank(userId, rank);
+    if (!res.success) { this.showToast(res.error); return; }
+    const cfg = this.rankInfo(res.rank);
+    this.showToast(`ตั้งยศ ${cfg.icon} ${cfg.label} ให้ผู้ใช้นี้แล้ว`);
+    if (userId === window.authManager.currentUser.id) {
+      window.authManager.currentUser.rank = res.rank;
+      this.renderSidebarFooter();
+    }
+    await window.adminManager.refreshLogs();
+    this.renderAdmin(document.getElementById('content'));
+  }
+
+  async adminSetDogcoin(userId) {
+    const input = document.getElementById('coinInput_' + userId);
+    const amount = input ? parseInt(input.value, 10) : 0;
+    const res = await window.adminManager.setUserDogcoin(userId, amount);
+    if (!res.success) { this.showToast(res.error); return; }
+    this.showToast(`ตั้ง Dogcoin ของผู้ใช้เป็น 🦴 ${amount.toLocaleString()} แล้ว`);
+    if (userId === window.authManager.currentUser.id) {
+      window.authManager.currentUser.dogcoin = amount;
+      this.renderSidebarFooter();
+    }
     await window.adminManager.refreshLogs();
     this.renderAdmin(document.getElementById('content'));
   }

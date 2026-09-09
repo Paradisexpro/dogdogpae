@@ -60,6 +60,18 @@
                 <span class="badge-counter hidden" id="chatBadge">0</span>
               </a>
             </li>
+            <li class="nav-item" data-tab="shop">
+              <a href="#">
+                <span class="nav-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                  </svg>
+                </span>
+                <span>ซื้อยศ</span>
+              </a>
+            </li>
             <li class="nav-item" data-tab="profile">
               <a href="#">
                 <span class="nav-icon">
@@ -94,6 +106,9 @@
       <div class="content-container" id="content"></div>
     </main>
   </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobileNav"></nav>
 
   <!-- Auth Modal -->
   <div class="modal-overlay" id="authModal">
@@ -144,25 +159,25 @@
   <div class="modal-overlay" id="postModal">
     <div class="modal-card modal-wide">
       <button class="modal-close-btn" onclick="window.app.closeModal('postModal')">✕</button>
-      <h2 class="modal-title">โพสต์รูปใหม่ 📸</h2>
-      <p class="modal-subtitle">แชร์ช่วงเวลาดีๆ กับเพื่อนๆ สี่ขา</p>
+      <h2 class="modal-title">โพสต์ใหม่ 📝</h2>
+      <p class="modal-subtitle">โพสต์รูปภาพ ข้อความ หรือวางลิงก์แชร์ก็ได้</p>
 
       <div class="upload-area" id="postUploadArea">
         <input type="file" accept="image/*" id="postFileInput" class="hidden">
         <div class="upload-placeholder" id="postUploadPlaceholder">
           <div class="upload-icon">🖼️</div>
-          <p>คลิกเพื่อเลือกรูปภาพ</p>
+          <p>แนบรูปภาพ (ไม่บังคับ)</p>
           <button class="btn btn-secondary" type="button" onclick="document.getElementById('postFileInput').click()">เลือกไฟล์</button>
         </div>
         <img id="postImagePreview" class="upload-preview hidden" alt="Preview">
       </div>
 
       <div class="form-group" id="postCaptionGroup">
-        <label class="form-label">คำบรรยาย</label>
-        <textarea class="form-input" id="postCaption" placeholder="เล่าเรื่องราวของภาพนี้... 🐾"></textarea>
+        <label class="form-label">ข้อความ / ลิงก์</label>
+        <textarea class="form-input" id="postCaption" placeholder="พิมพ์ข้อความ เล่าเรื่อง หรือวางลิงก์ที่อยากแชร์... 🔗"></textarea>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" id="postFilterGroup">
         <label class="form-label">ฟิลเตอร์</label>
         <div class="filter-options" id="postFilterOptions"></div>
       </div>

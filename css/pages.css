@@ -511,6 +511,25 @@
   background: var(--brand-gradient);
 }
 
+.profile-avatar.rank-member {
+  background: linear-gradient(135deg, #5a9fd8, #4dd0e1);
+}
+
+.profile-avatar.rank-premium {
+  background: linear-gradient(135deg, #b9801a, #fbbf24);
+  box-shadow: 0 4px 16px rgba(242, 184, 75, 0.4);
+}
+
+.profile-avatar.rank-vip {
+  background: linear-gradient(135deg, #6366f1, #38bdf8);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45);
+}
+
+.profile-avatar.rank-supervip {
+  background: conic-gradient(from 0deg, #f59e0b, #ef4444, #a855f7, #3b82f6, #2dd4bf, #f59e0b);
+  box-shadow: 0 4px 22px rgba(245, 158, 11, 0.5);
+}
+
 .profile-avatar img {
   width: 100%;
   height: 100%;
@@ -573,6 +592,13 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.profile-mobile-actions {
+  display: none;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Profile Posts Grid */
@@ -749,7 +775,79 @@
 
 .admin-actions {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rank-perks-card {
+  margin: 14px 22px 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.rank-perks-card.rank-premium {
+  border-color: rgba(242, 184, 75, 0.45);
+  background: linear-gradient(135deg, rgba(242, 184, 75, 0.12), var(--bg-secondary));
+}
+
+.rank-perks-card.rank-vip {
+  border-color: rgba(129, 140, 248, 0.55);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.14), var(--bg-secondary));
+}
+
+.rank-perks-card.rank-supervip {
+  border-color: rgba(245, 158, 11, 0.6);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(168, 85, 247, 0.1), var(--bg-secondary));
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+}
+
+.rank-perks-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.rank-perks-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.rank-perk-item {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.admin-rank-set {
+  display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+@media (max-width: 560px) {
+  .rank-perks-card {
+    margin: 14px 12px 4px;
+  }
+}
+
+.admin-rank-cell .rank-badge {
+  margin-right: 0;
+  font-size: 10px;
+  padding: 1px 7px;
+}
+
+.rank-select {
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
 }
 
 .admin-mini-btn {
@@ -915,6 +1013,185 @@
   margin-bottom: 10px;
 }
 
+/* ===== SHOP / ซื้อยศ ===== */
+.shop-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.shop-header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+
+.shop-header h2 {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.shop-header p {
+  color: var(--text-muted);
+  margin: 0 0 18px;
+}
+
+.dogcoin-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.15), rgba(245, 158, 11, 0.25));
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  color: #b45309;
+  font-weight: 700;
+  font-size: 18px;
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
+}
+
+.dark-theme .dogcoin-balance {
+  color: #fbbf24;
+}
+
+.dogcoin-balance span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.shop-current-rank {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.shop-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  padding: 20px 16px;
+}
+
+.shop-rank-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.shop-rank-card:hover {
+  transform: translateY(-3px);
+}
+
+.shop-rank-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-rank-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.shop-rank-name {
+  font-size: 18px;
+  margin: 0;
+  flex: 1;
+}
+
+.shop-rank-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.dark-theme .shop-rank-price {
+  color: #fbbf24;
+}
+
+.shop-rank-price span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.shop-rank-perks {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+.shop-rank-card .btn {
+  margin-top: auto;
+}
+
+.shop-btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shop-note {
+  padding: 0 16px 32px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ===== Dogcoin chip (sidebar footer) ===== */
+.dogcoin-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(245, 158, 11, 0.2));
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: transform var(--transition-fast);
+}
+
+.dogcoin-chip:hover {
+  transform: scale(1.02);
+}
+
+.dogcoin-icon {
+  font-size: 15px;
+}
+
+.dogcoin-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.dark-theme .dogcoin-amount {
+  color: #fbbf24;
+}
+
+/* ===== Admin Dogcoin set ===== */
+.admin-coin-set {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coin-input {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
 /* Mobile Responsive */
 @media (max-width: 1000px) {
   .posts-grid {
@@ -1015,6 +1292,79 @@
 
   .login-gate-card {
     padding: 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .top-header .header-nav {
+    display: none;
+  }
+
+  #sidebarFooter {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    display: grid;
+  }
+
+  .main-content {
+    padding: 16px 12px calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .header-inner {
+    height: 60px;
+    flex-wrap: nowrap;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .header-brand .brand-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .header-search {
+    flex: 1;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .search-box {
+    padding: 9px 14px;
+  }
+
+  .profile-mobile-actions {
+    display: flex;
+  }
+
+  /* Modal แบบ bottom sheet */
+  .modal-overlay:not(#storyViewerModal) {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-overlay:not(#storyViewerModal) .modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .modal-close-btn {
+    top: 12px;
+    right: 12px;
+  }
+
+  .shop-rank-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dogcoin-balance {
+    font-size: 16px;
   }
 }
 

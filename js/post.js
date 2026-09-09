@@ -19,12 +19,13 @@ class PostManager {
     this.savePosts(posts);
   }
 
-  async createPost({ imageUrl, caption, filter }) {
+  async createPost({ imageUrl, caption, filter, link }) {
     const me = window.authManager.currentUser;
     if (!me) return { success: false, error: 'กรุณาเข้าสู่ระบบก่อนโพสต์' };
-    if (!imageUrl) return { success: false, error: 'กรุณาเลือกรูปภาพ' };
+    const text = String(caption || '').trim();
+    if (!text && !imageUrl && !link) return { success: false, error: 'กรุณาใส่ข้อความ รูปภาพ หรือลิงก์' };
     try {
-      const res = await window.api.post('/posts', { imageUrl, caption, filter });
+      const res = await window.api.post('/posts', { imageUrl, caption: text, filter, link });
       this.mergePost(res.post);
       return { success: true, post: res.post };
     } catch (e) {
